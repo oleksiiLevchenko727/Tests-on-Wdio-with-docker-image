@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  wdio-tests:
+    image: b1e6y/oleksiilevchenko-wdio-tests:latest
+    container_name: wdio-tests
+    
+    shm_size: '2gb' 
+    
+    environment:
+      - CHROME_BIN=/usr/bin/google-chrome
+      - CHROME_PATH=/usr/bin/google-chrome
+    
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./allure-report:/app/allure-report
+      
+    tty: true
