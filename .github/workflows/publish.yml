@@ -57,7 +57,7 @@ jobs:
       - name: Generate and Publish Allure Report to Pages
   
         if: always() 
-        uses: simple-elf/allure-report-action@v1.7
+        uses: simple-elf/allure-report-action@v2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allure_results_path: allure-results
