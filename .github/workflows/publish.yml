@@ -1,0 +1,59 @@
+name: WDIO Tests in Docker with Allure Reporting
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docker-wdio:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write   
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true                         
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/wdio-allure:latest
+            ghcr.io/${{ github.repository_owner }}/wdio-allure:${{ github.run_number }}
+          load: true                         
+
+      - name: Run WDIO Tests in Docker
+        run: |
+          mkdir -p allure-results
+
+          docker run --rm \
+            -v ${{ github.workspace }}:/app \
+            -v ${{ github.workspace }}/allure-results:/app/allure-results \
+            ghcr.io/${{ github.repository_owner }}/wdio-allure:latest
+
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@v1.7
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allure_results_path: allure-results
+          allure_report_path: allure-report
+          issue_pr: true
+
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
