@@ -1,4 +1,4 @@
-name: WDIO Tests in Docker (No Allure Report)
+name: WDIO Tests and Allure Pages Deployment
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
   docker-wdio:
     runs-on: ubuntu-latest
     permissions:
-      contents: read 
+      contents: write 
       packages: write 
 
     steps:
@@ -43,10 +43,34 @@ jobs:
         run: |
           echo "Starting WDIO tests inside Docker container..."
           
+          mkdir -p allure-results
+          chmod 777 allure-results 
+          
           docker run --rm \
             -v ${{ github.workspace }}:/app \
-            -v /app/node_modules \
+            -v /app/node_modules 
+            -v ${{ github.workspace }}/allure-results:/app/allure-results \
             b1e6y/oleksiilevchenko-wdio-tests:latest
           
           echo "WDIO tests completed."
           
+      - name: Generate and Publish Allure Report to Pages
+  
+        if: always() 
+        uses: simple-elf/allure-report-action@v1.7
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allure_results_path: allure-results
+          allure_report_path: allure-report
+          issue_pr: true
+         
+          gh_pages: gh-pages 
+          report_history: true 
+          
+      - name: Upload Allure Report Artifact (for debugging)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-report
+          path: allure-report
+          retention-days: 7
